@@ -1,40 +1,41 @@
-import UserDatabase from "../data-access-layer/user.database.js"
-import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
+import UserDatabase from '../data-access-layer/user.database.js';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-class AuthService{
-    signupService = async (name: string, username: string, password:string) =>{
-        const user = await UserDatabase.isUsernameTaken(username)
-        
-        if(user.rows.length > 0){
-            throw new Error('Username is already taken')
-        }
+class AuthService {
+	signupService = async (name: string, username: string, password: string) => {
+		const user = await UserDatabase.isUsernameTaken(username);
 
-        const hashedPassword = await bcrypt.hash(password, 10)
+		if (user.rows.length > 0) {
+			throw new Error('Username is already taken');
+		}
 
-        await UserDatabase.createUser(name, username, hashedPassword)
-    }
+		const hashedPassword = await bcrypt.hash(password, 10);
 
-    loginService = async (username: string, password:string) =>{
-        const user = await UserDatabase.searchUser(username)
+		await UserDatabase.createUser(name, username, hashedPassword);
+	};
 
-        if(user === undefined){
-            throw new Error('User not found')
-        }
+	loginService = async (username: string, password: string) => {
+		const user = await UserDatabase.searchUser(username);
 
-       const isValidPassword = await bcrypt.compare(password, user.password)
+		if (user === undefined) {
+			throw new Error('User not found');
+		}
 
-       if(!isValidPassword){
-        throw new Error('Wrong data')
-       }
+		const isValidPassword = await bcrypt.compare(password, user.password);
 
-       const token = jwt.sign(
-        {id: user.id , role: user.role},
-        String(process.env.JWT_SECRET),
-        {expiresIn: '24h'})
+		if (!isValidPassword) {
+			throw new Error('Wrong data');
+		}
 
-        return token
-    }
+		const token = jwt.sign(
+			{ id: user.id, role: user.role },
+			String(process.env.JWT_SECRET),
+			{ expiresIn: '24h' },
+		);
+
+		return token;
+	};
 }
 
-export default new AuthService()
+export default new AuthService();
